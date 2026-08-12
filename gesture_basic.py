@@ -19,6 +19,7 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 prev_x, prev_y = None, None
+curr_dx, curr_dy = 0, 0
 last_click = 0
 
 while True:
@@ -45,14 +46,21 @@ while True:
             dx = index_tip.x - prev_x
             dy = index_tip.y - prev_y
 
-            move_x = dx * pyautogui.size().width * MULTIPLIER
-            move_y = dy * pyautogui.size().height * MULTIPLIER
+            target_dx = dx * pyautogui.size().width * MULTIPLIER
+            target_dy = dy * pyautogui.size().height * MULTIPLIER
 
-            pyautogui.moveRel(move_x * SMOOTH, move_y * SMOOTH)
+            curr_dx = curr_dx + (target_dx - curr_dx) * SMOOTH
+            curr_dy = curr_dy + (target_dy - curr_dy) * SMOOTH
+
+            try:
+                pyautogui.moveRel(curr_dx, curr_dy)
+            except pyautogui.FailSafeException:
+                pass
 
             prev_x, prev_y = index_tip.x, index_tip.y
         else:
             prev_x, prev_y = None, None  # reset if finger is down
+            curr_dx, curr_dy = 0, 0
 
         # Auto click (pinch)
         pinch_distance = ((index_tip.x - thumb_tip.x)**2 + (index_tip.y - thumb_tip.y)**2)**0.5
